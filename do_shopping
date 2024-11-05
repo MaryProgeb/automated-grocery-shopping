@@ -1,0 +1,245 @@
+#!/usr/bin/env python3
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support import expected_conditions as EC
+
+import subprocess
+import re
+
+def close_alert():
+    try:
+        WebDriverWait(driver, 5).until(EC.alert_is_present())
+        driver.switch_to.alert.accept()
+    except:
+        pass
+
+def sort_items(url):
+    return url + 'SortBy=ComparativePrice&SortAsc=True'
+
+def get_cheapest(url, add_more_input_id, add_more_btn_id, quantity=None):
+    driver.get(BASE_URL + url)
+
+    # change quantity
+    if quantity:
+        add_more_input = driver.find_element_by_id(add_more_input_id)
+        add_more_input.clear()
+        add_more_input.send_keys(quantity)
+
+    # add to the basket
+    add_cheapest_btn = driver.find_element_by_id(add_more_btn_id)
+    add_cheapest_btn.click()
+    close_alert()
+
+def get_cheapest_from_category(url, quantity=None):
+    add_more_input_id = 'ctl00_MainContent_lstProduct_repProducts_ctl01_item_prodAmount_tbQuantity'
+    add_more_btn_id = 'ctl00_MainContent_lstProduct_repProducts_ctl01_item_prodAmount_btnAdd'
+    get_cheapest(url, add_more_input_id, add_more_btn_id, quantity)
+
+def get_cheapest_from_search(url, quantity=None):
+    add_more_input_id = 'ctl00_MainContent_lstProducts_repProducts_ctl01_item_prodAmount_tbQuantity'
+    add_more_btn_id = 'ctl00_MainContent_lstProducts_repProducts_ctl01_item_prodAmount_btnAdd'
+    get_cheapest(url, add_more_input_id, add_more_btn_id, quantity)
+
+def get_all_discounted(url):
+    driver.get(BASE_URL + url)
+    discounted_items = driver.find_elements_by_class_name('newPrice')
+    if discounted_items:
+        for element in discounted_items:
+            row_element = element.find_element_by_xpath(".//ancestor::tr")
+            add_btn = row_element.find_element_by_xpath(".//input[@value='Lisa']")
+            add_btn.click()
+            close_alert()
+
+def get_cheapest_discounted(url, quantity=None):
+    driver.get(BASE_URL + url)
+    discounted_items = driver.find_elements_by_class_name('newPrice')
+    if discounted_items:
+        cheapest_discounted = driver.find_elements_by_class_name('newPrice')[0]
+        row_element = cheapest_discounted.find_element_by_xpath(".//ancestor::tr")
+
+        # change quantity
+        if quantity:
+            add_more_input = driver.find_element_by_xpath(".//input[@class='text min']")
+            add_more_input.clear()
+            add_more_input.send_keys(quantity)
+
+        # add to the basket
+        add_btn = row_element.find_element_by_xpath(".//input[@value='Lisa']")
+        add_btn.click()
+        close_alert()
+
+BASE_URL = 'https://www.e-maxima.ee/'
+CURRENT_BASKET_URL = 'Pages/Baskets/Current.aspx'
+
+MILK = sort_items('Products/sook-ja-jook/Piimatooted-munad-ja-juust/Piim.aspx?')
+KEEFIR = sort_items('Products/sook-ja-jook/Piimatooted-munad-ja-juust/Keefir.aspx?')
+SWEET_PEPPER = sort_items('Pages/Search/Products.aspx?paprika&subcat=6aed9981-23ed-477e-bf98-da18b087db51&')
+TOMATOES = sort_items('Pages/Search/Products.aspx?tomat&subcat=3bfa93f4-ab2b-48c7-afd7-f1145435eed7&')
+CUCUMBERS = sort_items('Pages/Search/Products.aspx?kurk&subcat=3bfa93f4-ab2b-48c7-afd7-f1145435eed7&')
+CHICKEN_FILLET = sort_items('Pages/Search/Products.aspx?filee&subcat=ef2479f5-f2a4-488f-a09d-2a7f14dac84e&')
+CHEESE = sort_items('Products/sook-ja-jook/Piimatooted-munad-ja-juust/Kaaritatud-juustud.aspx?')
+OTHER_CHEESE = sort_items('Products/sook-ja-jook/Piimatooted-munad-ja-juust/Muud-juustud.aspx?')
+EGGS = sort_items('Products/sook-ja-jook/Piimatooted-munad-ja-juust/Munad.aspx?')
+MUSHROOMS = sort_items('Products/sook-ja-jook/Puu-ja-koogiviljad/Seened.aspx?')
+BREAD = sort_items('Products/sook-ja-jook/Pagari-ja-kondiitritooted/Leib.aspx?')
+WHITE_BREAD = sort_items('Products/sook-ja-jook/Pagari-ja-kondiitritooted/Sai.aspx?')
+SOUR_CREAM = sort_items('Pages/Search/Products.aspx?hapukoor&subcat=340e2c6a-8b10-4900-9c1e-37b2dedfd21b&')
+ICEBERG = sort_items('Pages/Search/Products.aspx?j%u00e4%u00e4salat&')
+CAKES = sort_items('Products/sook-ja-jook/Pagari-ja-kondiitritooted/Varsked-tordid-ja-koogid.aspx?')
+FRUITS = sort_items('Products/sook-ja-jook/Puu-ja-koogiviljad/PuuviljadMarjad.aspx?')
+PASTA = sort_items('Products/sook-ja-jook/Tangud-pasta-maitseained-ja-kastmed/Makaronid.aspx?')
+TOASTS = sort_items('Products/sook-ja-jook/Pagari-ja-kondiitritooted/Leivakesed-saiakesed-rost.aspx?')
+ONION = sort_items('Pages/Search/Products.aspx?sibul&subcat=6aed9981-23ed-477e-bf98-da18b087db51&')
+ICE_CREAM = sort_items('Products/sook-ja-jook/Kulmutatud-tooted/Jaatis/sook-ja-jook-Perejaatised.aspx?')
+FROZEN_VEGETABLES = sort_items('Products/sook-ja-jook/Kulmutatud-tooted/Kulmutatud-juurviljad-ja-maitserohelised.aspx?')
+FROZEN_PIZZA = sort_items('Products/sook-ja-jook/Kulmutatud-tooted/Kulmutatud-pitsad.aspx?')
+FRESH_FISH = sort_items('Products/sook-ja-jook/Varske-kala-ja-kalatooted/Varske-kala.aspx?')
+MINCED_MEAT = sort_items('Products/sook-ja-jook/Lihatooted/Varske-hakkliha.aspx?')
+BURGER_BUNS = sort_items('Pages/Search/Products.aspx?burgerikukkel&subcat=ba8a68ad-9ff5-4472-8320-4a1910fa6208&')
+
+### WebDriver settings
+
+PATH_TO_EXTENSION = '/home/mary/newHome/mary/.config/chromium/Default/Extensions/cjpalhdlnbpafiamejdnhcphjbkeiagm/1.8.4_0'
+
+chrome_options = Options()
+chrome_options.add_argument('load-extension=' + PATH_TO_EXTENSION)
+# headless mode does not support alerts ☹
+# chrome_options.add_argument('headless')
+
+driver = webdriver.Chrome(chrome_options=chrome_options)
+driver.create_options()
+
+### Get credentials from password manager
+
+user_data = subprocess.check_output(["pass", "e-shops/e-maxima"]).decode('utf-8')
+login_row = user_data.splitlines()[2] # third row
+password = user_data.splitlines()[0] # first row
+login = re.search(r"user: (\S+)", login_row).group(1)
+
+### Login
+
+driver.get(BASE_URL)
+
+login_link = driver.find_element_by_css_selector('#login a')
+login_link.click()
+
+
+wait = WebDriverWait(driver, 10)
+wait.until(EC.element_to_be_clickable((By.ID, "ctl00_ctl00_LoginModalCntrl_LoginForm_btnLogin")))
+
+login_input = driver.find_element_by_id('ctl00_ctl00_LoginModalCntrl_LoginForm_tbLogin_tb');
+login_input.send_keys(login)
+
+pass_input = driver.find_element_by_id('ctl00_ctl00_LoginModalCntrl_LoginForm_tbPassword_tb');
+pass_input.send_keys(password)
+
+login_btn = driver.find_element_by_id('ctl00_ctl00_LoginModalCntrl_LoginForm_btnLogin');
+login_btn.click()
+
+wait.until(EC.presence_of_element_located((By.ID, "linkLogout")))
+
+### Switch to Estonian
+
+changeLangToEst = driver.find_element_by_id('ctl00_ctl00_langCtrl_repLang_ctl00_lbChangeCulture')
+changeLangToEst.click()
+
+
+### Clear the basket
+
+driver.get(BASE_URL + CURRENT_BASKET_URL)
+wait.until(EC.presence_of_element_located((By.XPATH, "//input[@value='Tühjenda ostukorv']")))
+
+clear_basket_btn = driver.find_element_by_xpath("//input[@value='Tühjenda ostukorv']")
+clear_basket_btn.click()
+close_alert()
+
+### Start shopping
+
+## Cheapest (search)
+
+# Sweet pepper
+get_cheapest_from_search(SWEET_PEPPER)
+
+# Tomatoes
+get_cheapest_from_search(TOMATOES, 1)
+
+# Cucumbers
+get_cheapest_from_search(CUCUMBERS, 1)
+
+# Sour cream
+get_cheapest_from_search(SOUR_CREAM, 2)
+
+# Chicken fillet
+get_cheapest_from_search(CHICKEN_FILLET)
+
+# Iceberg
+get_cheapest_from_search(ICEBERG)
+
+# Onion
+get_cheapest_from_search(ONION)
+
+# Burger buns
+get_cheapest_from_search(BURGER_BUNS)
+
+
+## Cheapest (pages)
+
+# Milk
+get_cheapest_from_category(MILK, 5)
+
+# Keefir
+get_cheapest_from_category(KEEFIR)
+
+# Bread
+get_cheapest_from_category(BREAD)
+
+# White bread
+get_cheapest_from_category(WHITE_BREAD)
+
+# Cheese
+get_cheapest_from_category(CHEESE)
+
+# Eggs
+get_cheapest_from_category(EGGS)
+
+# Mushrooms
+get_cheapest_from_category(MUSHROOMS)
+
+
+## Discounted
+
+# Fruits
+get_all_discounted(FRUITS)
+
+# Pasta
+get_all_discounted(PASTA)
+
+# Other cheese
+get_all_discounted(OTHER_CHEESE)
+
+# Frozen vegetables
+get_all_discounted(FROZEN_VEGETABLES)
+
+# Frozen pizza
+get_all_discounted(FROZEN_PIZZA)
+
+# Toast
+get_cheapest_discounted(TOASTS, 2)
+
+# Cakes
+get_cheapest_discounted(CAKES)
+
+# Ice cream
+get_cheapest_discounted(ICE_CREAM)
+
+# Fresh fish
+get_cheapest_discounted(FRESH_FISH)
+
+# Minced meat
+get_cheapest_discounted(MINCED_MEAT)
+
+### Finish shopping and show the basket
+driver.get(BASE_URL + CURRENT_BASKET_URL)
